@@ -27,12 +27,9 @@ jobs:
             packages:
                any::knitr
                any::rmarkdown
-               any::jsonlite
                any::dplyr
                any::ggplot2
-               any::readr
                any::lubridate
-               any::forcats
                any::googleway
                any::purrr
       - name: Render document

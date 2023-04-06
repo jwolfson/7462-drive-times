@@ -1,4 +1,5 @@
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
 library(googleway)
 library(lubridate)
 library(purrr)

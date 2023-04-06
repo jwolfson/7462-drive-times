@@ -56,17 +56,27 @@ drive_times <- map_dfr(times_to_check, get_travel_times,
 
 ## Produce the drive times plot
 drive_times %>% 
-  mutate(pessimist_label = ifelse(pessimistic == min(pessimistic), "Best time\nfor pessimists", ""),
-         optimist_label = ifelse(optimistic == min(optimistic), "Best time\nfor optimists", "")) %>%
-ggplot(aes(x = departure_time)) +
-  geom_line(aes(y = optimistic), linetype = "dashed", color = "green") +
-  geom_line(aes(y = best_guess)) +
-  geom_line(aes(y = pessimistic), linetype = "dashed", color = "red") +
-  geom_text(aes(y = optimistic, label = optimist_label), color = "green", angle = 30, hjust = 0, nudge_y = 0.3) +
-  geom_text(aes(y = pessimistic, label = pessimist_label), color = "red", angle = 30, hjust = 1, nudge_y = -0.3) +
-  geom_point(aes(y = optimistic, alpha = optimist_label), size = 3, color = "green") +
-  geom_point(aes(y = pessimistic, alpha = pessimist_label), size = 3, color = "red") +
-  scale_alpha_manual(values = c(0,1,1), drop = TRUE) +
+  pivot_longer(-departure_time, names_to = "estimate_type", values_to = "estimate") %>%
+  group_by(estimate_type) %>%
+  mutate(is_type_min = (estimate == min(estimate))) %>%
+  ungroup() %>%
+  mutate(type_descriptor = factor(estimate_type, labels = c("glass half full", "optimists", "pessimists"))) %>%
+# label = ifelse(estimate == min(estimate), sprintf("Best time for %s")))
+#   mutate(pessimist_label = ifelse(pessimistic == min(pessimistic), "Best time\nfor pessimists", ""),
+#          optimist_label = ifelse(optimistic == min(optimistic), "Best time\nfor optimists", "")) %>%
+  ggplot(aes(x = departure_time, y = estimate, color = estimate_type)) +
+  geom_line() +
+  geom_point(aes(alpha = is_type_min), size = 3) +
+  geom_vline(aes(xintercept = departure_time, alpha = is_type_min, color = estimate_type), linetype = "dashed") +
+  scale_color_manual(values = c("black", "green", "red")) +
+  scale_alpha_manual(values = c(0,1)) +
+  geom_text(data = function(x) { 
+    x %>% arrange(estimate_type) %>% 
+      filter(is_type_min) %>% 
+      mutate(label = sprintf("Best time for %s", type_descriptor))
+    },
+            aes(y = median(estimate), label = label), angle = 90, hjust = 0, nudge_y = mean(drive_times$best_guess)*0.05,
+            nudge_x = 100) +
   guides(alpha = "none") +
   theme_minimal() +
   ylab("Minutes") +

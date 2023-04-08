@@ -28,10 +28,13 @@ jobs:
                any::knitr
                any::rmarkdown
                any::dplyr
+               any::tidyr
                any::ggplot2
                any::lubridate
                any::googleway
                any::purrr
+               any::leaflet
+               any::gepaf
       - name: Render document
         uses: quarto-dev/quarto-actions/render@v2
         env:

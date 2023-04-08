@@ -35,10 +35,15 @@ DEST <- "4940 France Ave S, Minneapolis, MN"
 
 ```{r}
 #| echo: false
+library(leaflet)
+library(gepaf)
 
-## Produce the map
-google_map(key = api_key) %>%
-  add_polylines(get_route_polyline(ORIG, DEST), polyline = "points")
+data <- decodePolyline(get_route_polyline(ORIG, DEST)$points)
+
+leaflet() %>% addProviderTiles(provider = "OpenStreetMap") %>%
+  addPolylines(data = data, 
+                lng = ~lon,
+               lat = ~lat)
 ```
 
 ## Driving Times

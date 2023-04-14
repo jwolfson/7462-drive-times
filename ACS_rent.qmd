@@ -1,0 +1,111 @@
+---
+title: "Assignment8"
+format: html
+editor: visual
+---
+
+## Question 1.3
+
+```{r setup, include = FALSE, echo = FALSE}
+library(ggthemes)
+library(tidycensus)
+library(tidyverse)
+library(ggmap)
+library(plotly)
+library(osmdata)
+library(janitor)
+library(leaflet)
+library(htmltools)
+library(sf)
+library(gt)
+library(ggthemes)
+library(viridis)
+library(tigris)
+library(paletteer)
+library(ggridges)
+```
+
+
+```{r, include=FALSE}
+api_key <- Sys.getenv("MAPS_API_KEY")
+```
+
+
+
+```{r, include=FALSE}
+census_api_key(api_key)
+mn_rent.df <- get_acs(
+  geography = "tract",
+  variables = "B25064_001", #Code for median rent
+  state     = "MN",
+  county    = "Hennepin",
+  year      = 2020,
+  geometry  = TRUE
+)
+
+
+
+mn_rent_plotly.df <- mn_rent.df %>%
+  mutate(
+    tract      = str_split(NAME, ",") %>%
+                 map_chr(1) %>%
+                 str_remove("Census Tract "),
+    text_label = str_c(
+                  "Tract: ",
+                  tract,
+                  "\nMedian Rent: ",
+                  scales::dollar(estimate)
+                 )
+  )
+
+#Generate the ggplot
+rent.gg <- ggplot() + 
+  geom_sf(data = mn_rent_plotly.df, 
+          aes(fill = estimate, text = text_label),
+          colour = "black", size = 0.1) + 
+  labs(title = "Hennepin County, MN 2020 ACS Median Rent") + 
+  scale_fill_viridis_c("Median Rent", labels = scales::dollar) +
+  theme_map() +
+  theme(
+    plot.title   = element_text(size  = 16,
+                                hjust = 0.5),
+    legend.text  = element_text(size = 16),
+    legend.title = element_text(size = 16),
+    legend.position = "right"
+  )
+```
+```{r, include=FALSE}
+
+mn.box           <- osmdata::getbb("minnesota")
+hennepin.box     <- osmdata::getbb("hennepin")
+hennepin.map <- get_map(
+  location = hennepin.box,
+  source   = "stamen",
+  maptype  = "terrain",
+  crop = TRUE
+)
+hennepin_base.gg <- ggmap(hennepin.map) +
+  theme_map()
+
+
+mn_rent.ggmap <- hennepin_base.gg +
+  geom_sf(data = mn_rent_plotly.df,
+          aes(fill = estimate, text = text_label),
+          size = 0.1,
+          inherit.aes = FALSE) +
+  scale_fill_viridis_c("Median Rent", labels = scales::dollar) +
+  theme_map() +
+ labs(title = "ACS Median Rent in Hennepin County, MN 2020")
+
+```
+### Plot : Median Rent 
+```{r}
+#Display
+ggplotly(mn_rent.ggmap,
+         tooltip = "text",
+         height  = 450,
+         width   = 700) %>%
+    style(hoveron = "fills") %>%
+  layout(legend = list(orientation = 'h'))
+  
+```

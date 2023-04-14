@@ -32,7 +32,7 @@ get_travel_times <- function(orig, dest, depart = Sys.time()) {
                   pessimistic="pessimistic"), 
                 get_time) %>%
     mutate(departure_time = depart)
-    
+  
   return(df)
 }
 
